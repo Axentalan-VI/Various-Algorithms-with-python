@@ -1,0 +1,91 @@
+import random
+
+# Define simulation parameters
+N = 100  # Number of customers
+SIMULATIONS = 10  # Number of simulations to run
+MAX_SERVICE_TIME = 10  # Maximum service time in minutes
+MAX_INTERARRIVAL_TIME = 5  # Maximum interarrival time in minutes
+
+# Define variables to keep track of simulation results
+total_waiting_time = 0
+customers_waiting = 0
+total_idle_time = 0
+server_busy_time = 0
+total_service_time = 0
+total_interarrival_time = 0
+total_time_in_system = 0
+
+# Run simulations
+for i in range(SIMULATIONS):
+    # Initialize simulation variables
+    waiting_time = 0
+    queue = []
+    service_time = 0
+    interarrival_time = 0
+    time_in_system = 0
+    server_busy = False
+    idle_time = 0
+
+    # Generate interarrival times and service times for each customer
+    interarrival_times = [random.randint(1, MAX_INTERARRIVAL_TIME) for _ in range(N)]
+    service_times = [random.randint(1, MAX_SERVICE_TIME) for _ in range(N)]
+
+    # Run simulation for each customer
+    for j in range(N):
+        # Update time variables
+        if j == 0:
+           arrival_time = 0
+        else:
+            arrival_time += interarrival_time
+        service_start_time = max(arrival_time, service_time)
+        service_end_time = service_start_time + service_times[j]
+        interarrival_time = interarrival_times[j]
+        time_in_system = service_end_time - arrival_time
+
+        # Check if server is idle
+        if not server_busy:
+            idle_time += service_start_time - arrival_time
+            server_busy = True
+
+        # Check if customer has to wait in queue
+        if service_start_time > arrival_time:
+            waiting_time += service_start_time - arrival_time
+            customers_waiting += 1
+            queue.append(j)
+        else:
+            server_busy_time += service_times[j]
+            total_time_in_system += time_in_system
+
+        # Serve customer
+        if queue:
+            customer = queue.pop(0)
+            service_time = service_end_time
+            server_busy_time += service_times[customer]
+            total_time_in_system += service_times[customer] + interarrival_times[customer]
+        else:
+            service_time = service_end_time
+            server_busy = False
+
+    # Update simulation results
+    total_waiting_time += waiting_time
+    total_idle_time += idle_time
+    total_service_time += sum(service_times)
+    total_interarrival_time += sum(interarrival_times)
+
+# Calculate average metrics
+avg_waiting_time = total_waiting_time / (N * SIMULATIONS)
+prob_customers_waiting = customers_waiting/ (N * SIMULATIONS)
+frac_idle_time = total_idle_time / (N * SIMULATIONS * MAX_INTERARRIVAL_TIME)
+prob_server_busy = 1 - frac_idle_time
+avg_service_time = total_service_time / (N * SIMULATIONS)
+avg_interarrival_time = total_interarrival_time / (N * SIMULATIONS)
+avg_time_in_system = total_time_in_system / (N * SIMULATIONS)
+
+# Print results
+print("Average waiting time for a customer:", avg_waiting_time)
+print("Probability that a customer has to wait in the queue:", prob_customers_waiting)
+print("Fraction of idle time of the server:", frac_idle_time)
+print("Probability of the server being busy:", prob_server_busy)
+print("Average service time:", avg_service_time)
+print("Average time between arrivals:", avg_interarrival_time)
+print("Average time a customer spends in the system:", avg_time_in_system)
